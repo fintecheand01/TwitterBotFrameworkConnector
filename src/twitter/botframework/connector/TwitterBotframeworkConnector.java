@@ -33,17 +33,16 @@ public class TwitterBotframeworkConnector {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws TwitterException,ApiException, InterruptedException{
+    public static void main(String[] args) throws TwitterException, ApiException, InterruptedException{
         // TODO code application logic here
         //access the twitter API using your twitter4j.properties file
-        Twitter twitter = TwitterFactory.getSingleton();
-        DirectLineExample();
+        Twitter twitter = TwitterFactory.getSingleton();        
         GetDirectMessage(twitter);          
         //print a message so we know when it finishes
         System.out.println("Done.");
     }
     
-    public static void GetDirectMessage(Twitter twitter) {
+    public static void GetDirectMessage(Twitter twitter) throws ApiException, InterruptedException{
         //Twitter twitter = new TwitterFactory().getInstance();        
         try {
             Paging paging = new Paging(1);
@@ -57,7 +56,8 @@ public class TwitterBotframeworkConnector {
                     user_name = user_name.concat(message.getSenderScreenName());
                     user_message = message.getText();
                     //send a tweet
-                    Status status = twitter.updateStatus("Hola " +user_name +" ¡Estamos atendiendo tu peticion! #Fintechando #HaciendoElParo");
+                    //Status status = twitter.updateStatus("Hola " +user_name +" ¡Estamos atendiendo tu peticion! #Fintechando #HaciendoElParo");
+                    DirectLineToBot(user_name, user_message);
                     SendDirectMessageAsResponse(twitter);
                 }
                 paging.setPage(paging.getPage() + 1);
@@ -67,8 +67,11 @@ public class TwitterBotframeworkConnector {
             System.exit(0);*/
         } catch (TwitterException te) {
             te.printStackTrace();
-            System.out.println("Failed to get messages: " + te.getMessage());
-            System.exit(-1);
+            System.out.println("Failed to get messages: " + te.getMessage());            
+        }
+         catch (ApiException te) {
+            te.printStackTrace();
+            System.out.println("Failed to get messages: " + te.getMessage());            
         }
     }
     
@@ -85,7 +88,7 @@ public class TwitterBotframeworkConnector {
         }
     }    
 
-    public static void DirectLineExample() throws ApiException, InterruptedException {
+    public static void DirectLineToBot(String user_name, String user_message) throws ApiException, InterruptedException {
 		String apiKey = "NoB7NVwpKtU.cwA.S8Y.9gSmVTbxanULuDQBYl7p0ILUFlJkAwm65qYo5Tp4Feo";
 		ConversationsApi conversationsApi = new ConversationsApi();
 		ApiClient client = conversationsApi.getApiClient();
@@ -100,11 +103,11 @@ public class TwitterBotframeworkConnector {
 			System.out.println("@@post a conversation message");
 			Activity activity = new Activity();
 			ChannelAccount channelAccount = new ChannelAccount();
-			channelAccount.setName("user1");
+			channelAccount.setName(user_name);
 			channelAccount.setId("directline");
 			activity.setFrom(channelAccount);
 			activity.setType("Message");
-			activity.setText("hello my bot!");
+			activity.setText(user_message);
 			ResourceResponse response = conversationsApi.conversationsPostActivity(conv.getConversationId(), activity);
 		}
 
@@ -117,6 +120,7 @@ public class TwitterBotframeworkConnector {
 				System.out.println("@@activitySet size = " + activitySet.getActivities().size());
 				for (Activity activity : activitySet.getActivities()) {
 					System.out.println("\t" + activity.getFrom().getName() + " says \"" + activity.getText() + "\"");
+                                        user_message = activity.getText();
 				}
 				if (activitySet.getWatermark() == null || watermark.equals(activitySet.getWatermark()) == false)
 					break;
