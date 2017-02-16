@@ -39,9 +39,6 @@ public class TwitterBotframeworkConnector {
         //access the twitter API using your twitter4j.properties file
         Twitter twitter = TwitterFactory.getSingleton();
         GetDirectMessage(twitter);          
-        //send a tweet
-        //Status status = twitter.updateStatus("hello world");
-
         //print a message so we know when it finishes
         System.out.println("Done.");
     }
@@ -59,6 +56,7 @@ public class TwitterBotframeworkConnector {
                             + message.getText());
                     user_name = user_name.concat(message.getSenderScreenName());
                     user_message = message.getText();
+                    //send a tweet
                     Status status = twitter.updateStatus("Hola " +user_name +" ¡Estamos atendiendo tu peticion! #Fintechando #HaciendoElParo");
                     SendDirectMessageAsResponse(twitter);
                 }
