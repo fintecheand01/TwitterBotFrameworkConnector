@@ -5,23 +5,22 @@
  */
 package twitter.botframework.connector;
 
+import io.swagger.client.ApiClient;
+import io.swagger.client.ApiException;
+import io.swagger.client.api.ConversationsApi;
+import io.swagger.client.model.Activity;
+import io.swagger.client.model.ActivitySet;
+import io.swagger.client.model.ChannelAccount;
+import io.swagger.client.model.Conversation;
+import io.swagger.client.model.ResourceResponse;
 import java.util.List;
 
 import twitter4j.DirectMessage;
 import twitter4j.Paging;
 import twitter4j.Status;
-import twitter4j.StatusDeletionNotice;
-import twitter4j.StatusListener;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-import twitter4j.TwitterStream;
-import twitter4j.TwitterStreamFactory;
-import twitter4j.User;
-import twitter4j.UserList;
-import twitter4j.UserStreamListener;
-import twitter4j.auth.AccessToken;
-import twitter4j.conf.ConfigurationBuilder;
 
 /**
  *
@@ -34,10 +33,11 @@ public class TwitterBotframeworkConnector {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws TwitterException{
+    public static void main(String[] args) throws TwitterException,ApiException, InterruptedException{
         // TODO code application logic here
         //access the twitter API using your twitter4j.properties file
         Twitter twitter = TwitterFactory.getSingleton();
+        DirectLineExample();
         GetDirectMessage(twitter);          
         //print a message so we know when it finishes
         System.out.println("Done.");
@@ -83,5 +83,48 @@ public class TwitterBotframeworkConnector {
             System.out.println("Failed to send a direct message: " + te.getMessage());
             System.exit(-1);
         }
+    }    
+
+    public static void DirectLineExample() throws ApiException, InterruptedException {
+		String apiKey = "NoB7NVwpKtU.cwA.S8Y.9gSmVTbxanULuDQBYl7p0ILUFlJkAwm65qYo5Tp4Feo";
+		ConversationsApi conversationsApi = new ConversationsApi();
+		ApiClient client = conversationsApi.getApiClient();
+		client.addDefaultHeader("Authorization", "Bearer " + apiKey);
+
+		// Enable Jersey LoggingFilter and you can check contents of requests
+		client.setDebugging(true);
+
+		System.out.println("@@conversation start");
+		Conversation conv = conversationsApi.conversationsStartConversation();
+		{
+			System.out.println("@@post a conversation message");
+			Activity activity = new Activity();
+			ChannelAccount channelAccount = new ChannelAccount();
+			channelAccount.setName("user1");
+			channelAccount.setId("directline");
+			activity.setFrom(channelAccount);
+			activity.setType("Message");
+			activity.setText("hello my bot!");
+			ResourceResponse response = conversationsApi.conversationsPostActivity(conv.getConversationId(), activity);
+		}
+
+		{
+			System.out.println("@@get conversation messages");
+			String watermark = "";
+			do {
+				ActivitySet activitySet = //
+						conversationsApi.conversationsGetActivities(conv.getConversationId(), watermark);
+				System.out.println("@@activitySet size = " + activitySet.getActivities().size());
+				for (Activity activity : activitySet.getActivities()) {
+					System.out.println("\t" + activity.getFrom().getName() + " says \"" + activity.getText() + "\"");
+				}
+				if (activitySet.getWatermark() == null || watermark.equals(activitySet.getWatermark()) == false)
+					break;
+				watermark = activitySet.getWatermark();
+				System.out.println("\twatermark = " + watermark);
+			} while (true);
+		}
+        System.out.println("@@end");
     }
+    
 }
